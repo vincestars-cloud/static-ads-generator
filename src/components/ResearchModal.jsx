@@ -1,15 +1,33 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 
 export default function ResearchModal({ isOpen, onClose, onLoad, loading }) {
-  const [files, setFiles] = useState([])
-  const [combinedText, setCombinedText] = useState('')
+  const [clients, setClients] = useState([])
+  const [clientsLoaded, setClientsLoaded] = useState(false)
+  const [tab, setTab] = useState('clients') // 'clients' | 'drop' | 'paste'
   const [pastedText, setPastedText] = useState('')
-  const [tab, setTab] = useState('drop') // 'drop' | 'paste'
   const [dragOver, setDragOver] = useState(false)
+  const [droppedFiles, setDroppedFiles] = useState([])
+  const [droppedText, setDroppedText] = useState('')
   const fileInputRef = useRef(null)
+
+  // Auto-load clients JSON on mount
+  useEffect(() => {
+    if (clientsLoaded) return
+    const base = import.meta.env.BASE_URL || '/'
+    fetch(`${base}clients-data.json`)
+      .then(r => r.ok ? r.json() : [])
+      .then(data => { setClients(data); setClientsLoaded(true) })
+      .catch(() => setClientsLoaded(true))
+  }, [clientsLoaded])
 
   if (!isOpen) return null
 
+  // --- Clients tab ---
+  const handleClientSelect = (client) => {
+    onLoad(client.combinedText)
+  }
+
+  // --- Drop tab ---
   const readFiles = async (fileList) => {
     const newFiles = []
     const texts = []
@@ -20,8 +38,8 @@ export default function ResearchModal({ isOpen, onClose, onLoad, loading }) {
         texts.push(`--- FILE: ${file.name} ---\n${text}`)
       }
     }
-    setFiles(prev => [...prev, ...newFiles])
-    setCombinedText(prev => prev + (prev ? '\n\n' : '') + texts.join('\n\n'))
+    setDroppedFiles(prev => [...prev, ...newFiles])
+    setDroppedText(prev => prev + (prev ? '\n\n' : '') + texts.join('\n\n'))
   }
 
   const handleDrop = async (e) => {
@@ -30,28 +48,10 @@ export default function ResearchModal({ isOpen, onClose, onLoad, loading }) {
     await readFiles(e.dataTransfer.files)
   }
 
-  const handleFileSelect = async (e) => {
-    await readFiles(e.target.files)
-    e.target.value = ''
+  const handleClearDrop = () => {
+    setDroppedFiles([])
+    setDroppedText('')
   }
-
-  const handleRemoveFile = (idx) => {
-    const removed = files[idx]
-    setFiles(prev => prev.filter((_, i) => i !== idx))
-    // Rebuild combined text without removed file
-    setCombinedText(prev => {
-      const sections = prev.split(/--- FILE: .+ ---\n/)
-      sections.splice(idx + 1, 1)
-      return sections.join('')
-    })
-  }
-
-  const handleClearAll = () => {
-    setFiles([])
-    setCombinedText('')
-  }
-
-  const totalChars = tab === 'drop' ? combinedText.length : pastedText.length
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -62,6 +62,9 @@ export default function ResearchModal({ isOpen, onClose, onLoad, loading }) {
         </div>
 
         <div className="modal-tabs">
+          <button className={`modal-tab ${tab === 'clients' ? 'active' : ''}`} onClick={() => setTab('clients')}>
+            Clients {clients.length > 0 && `(${clients.length})`}
+          </button>
           <button className={`modal-tab ${tab === 'drop' ? 'active' : ''}`} onClick={() => setTab('drop')}>
             Drop Files
           </button>
@@ -70,26 +73,55 @@ export default function ResearchModal({ isOpen, onClose, onLoad, loading }) {
           </button>
         </div>
 
+        {/* CLIENTS TAB — one-click load */}
+        {tab === 'clients' && (
+          <div className="modal-body">
+            {clients.length === 0 ? (
+              <p className="modal-hint">No client research data found. Use the Drop Files or Paste Text tab instead, or regenerate the clients-data.json file.</p>
+            ) : (
+              <>
+                <p className="modal-hint">Click a client to instantly load all their research. Brand info, target audience, and buyer psychology will be auto-extracted.</p>
+                <div className="client-grid">
+                  {clients.map(client => (
+                    <button
+                      key={client.slug}
+                      className="client-card-btn"
+                      onClick={() => handleClientSelect(client)}
+                      disabled={loading}
+                    >
+                      <strong>{client.name}</strong>
+                      <span className="client-desc">{client.description}</span>
+                      <span className="client-meta">
+                        {client.fileCount} files &middot; {(client.totalChars / 1000).toFixed(0)}k chars
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* DROP FILES TAB */}
         {tab === 'drop' && (
           <div className="modal-body">
             <p className="modal-hint">
-              Drop your research files here — deep buyer research, brand guides, campaign strategies, READMEs.
-              The AI will extract brand info, target audience, and buyer psychology to power your ad generation.
+              For new clients not in the list — drop research files here.
             </p>
 
             <div
-              className={`drop-zone ${dragOver ? 'drag-over' : ''} ${files.length > 0 ? 'has-files' : ''}`}
+              className={`drop-zone ${dragOver ? 'drag-over' : ''} ${droppedFiles.length > 0 ? 'has-files' : ''}`}
               onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
               onDragLeave={() => setDragOver(false)}
               onDrop={handleDrop}
               onClick={() => fileInputRef.current?.click()}
             >
-              {files.length === 0 ? (
+              {droppedFiles.length === 0 ? (
                 <>
                   <div className="drop-icon">+</div>
                   <p className="drop-title">Drop .md or .txt files here</p>
                   <p className="drop-sub">or click to browse</p>
-                  <p className="drop-hint">Best files: deep-buyer-research.md, README.md, brand-guide.md, campaign-strategy.md</p>
+                  <p className="drop-hint">Best: deep-buyer-research.md, README.md, brand-guide.md</p>
                 </>
               ) : (
                 <>
@@ -102,50 +134,46 @@ export default function ResearchModal({ isOpen, onClose, onLoad, loading }) {
                 type="file"
                 accept=".md,.txt,.markdown,text/*"
                 multiple
-                onChange={handleFileSelect}
+                onChange={async (e) => { await readFiles(e.target.files); e.target.value = '' }}
                 hidden
               />
             </div>
 
-            {files.length > 0 && (
+            {droppedFiles.length > 0 && (
               <div className="loaded-files">
                 <div className="loaded-header">
-                  <span>{files.length} file{files.length > 1 ? 's' : ''} loaded</span>
-                  <button className="clear-all-btn" onClick={handleClearAll}>Clear all</button>
+                  <span>{droppedFiles.length} file{droppedFiles.length > 1 ? 's' : ''} loaded</span>
+                  <button className="clear-all-btn" onClick={handleClearDrop}>Clear all</button>
                 </div>
-                {files.map((f, i) => (
+                {droppedFiles.map((f, i) => (
                   <div key={i} className="loaded-file">
                     <span className="file-icon">&#128196;</span>
                     <span className="file-name">{f.name}</span>
                     <span className="file-size">{(f.size / 1000).toFixed(1)}k chars</span>
-                    <button className="file-remove" onClick={() => handleRemoveFile(i)}>&times;</button>
                   </div>
                 ))}
-                <div className="paste-stats">
-                  {totalChars.toLocaleString()} total chars / ~{Math.ceil(totalChars / 4).toLocaleString()} tokens
-                </div>
               </div>
             )}
 
             <button
               className="btn-primary"
-              disabled={files.length === 0 || loading}
-              onClick={() => onLoad(combinedText)}
+              disabled={droppedFiles.length === 0 || loading}
+              onClick={() => onLoad(droppedText)}
             >
-              {loading ? 'Extracting...' : `Extract & Load Research (${files.length} file${files.length > 1 ? 's' : ''})`}
+              {loading ? 'Extracting...' : `Extract & Load (${droppedFiles.length} file${droppedFiles.length > 1 ? 's' : ''})`}
             </button>
           </div>
         )}
 
+        {/* PASTE TAB */}
         {tab === 'paste' && (
           <div className="modal-body">
             <p className="modal-hint">
-              Paste any research document — deep buyer research, market analysis, customer interviews, brand briefs.
-              The AI will extract everything needed to generate targeted ads with real customer language.
+              Paste any research document — the AI will extract everything needed.
             </p>
             <textarea
               className="research-textarea large"
-              placeholder={`Paste your research here...\n\nWorks great with:\n- Suby 10-Tab deep buyer research\n- Business scanner output\n- Market research reports\n- Brand guides / README files\n- Campaign strategy docs`}
+              placeholder="Paste research here..."
               value={pastedText}
               onChange={e => setPastedText(e.target.value)}
               rows={16}

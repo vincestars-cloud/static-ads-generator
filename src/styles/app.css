@@ -891,6 +891,65 @@ body {
   margin-bottom: 16px;
 }
 
+/* Client Grid — one-click */
+.client-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.client-card-btn {
+  border: 1px solid #E2E4EA;
+  border-radius: 10px;
+  padding: 14px;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: #FFFFFF;
+  text-align: left;
+}
+
+.client-card-btn:hover:not(:disabled) {
+  border-color: #6C5CE7;
+  background: #F8F7FF;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(108, 92, 231, 0.12);
+}
+
+.client-card-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.client-card-btn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.client-card-btn strong {
+  font-size: 13px;
+  color: #1A1A2E;
+}
+
+.client-desc {
+  font-size: 11px;
+  color: #6B7280;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.client-meta {
+  font-size: 11px;
+  color: #6C5CE7;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
 /* Drop Zone */
 .drop-zone {
   border: 2px dashed #D1D5DB;
