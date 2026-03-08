@@ -1,15 +1,21 @@
 import React, { useState, useCallback } from 'react'
 import Sidebar from './components/Sidebar'
 import AdGrid from './components/AdGrid'
-import { analyzeReference, generateProfiles, generateAds, generateVariation } from './api'
+import ResearchModal from './components/ResearchModal'
+import { analyzeReference, generateProfiles, generateAds, generateVariation, extractFromResearch, getDefaultApiKey } from './api'
 
 export default function App() {
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [loadingMessage, setLoadingMessage] = useState('')
 
-  // API Key
-  const [apiKey, setApiKey] = useState(() => localStorage.getItem('openai_api_key') || '')
+  // API Key — pre-filled from config, saved to localStorage
+  const [apiKey, setApiKey] = useState(() => localStorage.getItem('openai_api_key') || getDefaultApiKey())
+
+  // Research modal
+  const [showResearchModal, setShowResearchModal] = useState(false)
+  const [researchContext, setResearchContext] = useState('')
+  const [researchLoaded, setResearchLoaded] = useState(false)
 
   // Step 1: Inputs
   const [referenceFile, setReferenceFile] = useState(null)
@@ -42,12 +48,32 @@ export default function App() {
     localStorage.setItem('openai_api_key', key)
   }
 
+  const handleResearchLoad = useCallback(async (text) => {
+    if (!apiKey) {
+      alert('Please enter your OpenAI API key first')
+      return
+    }
+    setLoading(true)
+    setLoadingMessage('Extracting brand & audience data from research...')
+    try {
+      const extracted = await extractFromResearch(apiKey, text)
+      setBrandName(extracted.brandName || '')
+      setProductName(extracted.productName || '')
+      setProductDescription(extracted.productDescription || '')
+      setTargetAudience(extracted.targetAudience || '')
+      setPrice(extracted.price || '')
+      setResearchContext(extracted.researchSummary || text.substring(0, 6000))
+      setResearchLoaded(true)
+      setShowResearchModal(false)
+    } catch (err) {
+      alert('Error extracting research: ' + err.message)
+    }
+    setLoading(false)
+  }, [apiKey])
+
   const fileToBase64 = (file) => new Promise((resolve) => {
     const reader = new FileReader()
-    reader.onload = () => {
-      const base64 = reader.result.split(',')[1]
-      resolve({ base64, mimeType: file.type || 'image/png' })
-    }
+    reader.onload = () => resolve({ base64: reader.result.split(',')[1], mimeType: file.type || 'image/png' })
     reader.readAsDataURL(file)
   })
 
@@ -60,15 +86,17 @@ export default function App() {
       const extractedStyle = await analyzeReference(apiKey, base64, mimeType)
       setStyle(extractedStyle)
 
-      setLoadingMessage('Generating buyer profiles...')
-      const generatedProfiles = await generateProfiles(apiKey, { brandName, productName, productDescription, targetAudience })
+      setLoadingMessage('Generating buyer profiles from research...')
+      const generatedProfiles = await generateProfiles(apiKey, {
+        brandName, productName, productDescription, targetAudience, researchContext
+      })
       setProfiles(generatedProfiles)
       setStep(2)
     } catch (err) {
       alert('Error: ' + err.message)
     }
     setLoading(false)
-  }, [referenceFile, apiKey, brandName, productName, productDescription, targetAudience])
+  }, [referenceFile, apiKey, brandName, productName, productDescription, targetAudience, researchContext])
 
   const handleGenerateAds = useCallback(async () => {
     setLoading(true)
@@ -77,7 +105,7 @@ export default function App() {
     try {
       const generatedAds = await generateAds(apiKey, {
         brandName, productName, productDescription,
-        profiles, style, numAds, price
+        profiles, style, numAds, price, researchContext
       })
       setAds(generatedAds)
       setShowGrid(true)
@@ -85,7 +113,7 @@ export default function App() {
       alert('Error: ' + err.message)
     }
     setLoading(false)
-  }, [apiKey, brandName, productName, productDescription, profiles, style, numAds, price])
+  }, [apiKey, brandName, productName, productDescription, profiles, style, numAds, price, researchContext])
 
   const handleGenerateVariation = useCallback(async (ad) => {
     try {
@@ -138,6 +166,8 @@ export default function App() {
         useBrandKit={useBrandKit}
         setUseBrandKit={setUseBrandKit}
         generateAds={handleGenerateAds}
+        researchLoaded={researchLoaded}
+        onOpenResearch={() => setShowResearchModal(true)}
       />
       <main className="main-content">
         {showGrid ? (
@@ -158,6 +188,13 @@ export default function App() {
           </div>
         )}
       </main>
+
+      <ResearchModal
+        isOpen={showResearchModal}
+        onClose={() => setShowResearchModal(false)}
+        onLoad={handleResearchLoad}
+        loading={loading}
+      />
 
       {loading && (
         <div className="loading-overlay">

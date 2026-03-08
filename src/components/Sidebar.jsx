@@ -10,7 +10,8 @@ export default function Sidebar({
   price, setPrice, style, analyzeReference,
   profiles, removeProfile,
   numAds, setNumAds, aspectRatio, setAspectRatio,
-  useBrandKit, setUseBrandKit, generateAds
+  useBrandKit, setUseBrandKit, generateAds,
+  researchLoaded, onOpenResearch
 }) {
 
   const handleFileChange = (setter, previewSetter) => (e) => {
@@ -54,6 +55,15 @@ export default function Sidebar({
 
           {step === 1 && (
             <div className="step-content">
+              {/* Load from Research */}
+              <button
+                className={`btn-research ${researchLoaded ? 'loaded' : ''}`}
+                onClick={onOpenResearch}
+                type="button"
+              >
+                {researchLoaded ? '✓ Research Loaded — Fields Pre-filled' : 'Load from Research'}
+              </button>
+
               <label className="upload-area">
                 <span className="upload-label">Winning Style Reference <span className="req">Required</span></span>
                 {referencePreview ? (

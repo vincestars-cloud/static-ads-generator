@@ -771,6 +771,244 @@ body {
   to { transform: rotate(360deg); }
 }
 
+/* Research Button */
+.btn-research {
+  width: 100%;
+  padding: 12px;
+  border: 2px dashed #6C5CE7;
+  border-radius: 10px;
+  background: #F8F7FF;
+  color: #6C5CE7;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-bottom: 16px;
+  transition: all 0.2s;
+}
+
+.btn-research:hover {
+  background: #EEEAFF;
+  border-style: solid;
+}
+
+.btn-research.loaded {
+  background: #ECFDF5;
+  border-color: #10B981;
+  color: #059669;
+  border-style: solid;
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.modal-content {
+  background: #FFFFFF;
+  border-radius: 16px;
+  width: 680px;
+  max-width: 90vw;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #E2E4EA;
+}
+
+.modal-header h2 {
+  font-size: 18px;
+  font-weight: 800;
+  color: #1A1A2E;
+}
+
+.modal-close {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: #F5F6F8;
+  border-radius: 8px;
+  font-size: 20px;
+  cursor: pointer;
+  color: #6B7280;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-close:hover {
+  background: #E2E4EA;
+}
+
+.modal-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid #E2E4EA;
+}
+
+.modal-tab {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  background: none;
+  font-size: 14px;
+  font-weight: 600;
+  color: #9CA3AF;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+}
+
+.modal-tab.active {
+  color: #6C5CE7;
+  border-bottom-color: #6C5CE7;
+}
+
+.modal-tab:hover {
+  color: #374151;
+}
+
+.modal-body {
+  padding: 20px 24px;
+}
+
+.modal-hint {
+  font-size: 13px;
+  color: #6B7280;
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+
+/* Client Grid */
+.client-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.client-card {
+  border: 1px solid #E2E4EA;
+  border-radius: 10px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.client-card:hover {
+  border-color: #6C5CE7;
+  background: #F8F7FF;
+}
+
+.client-card.selected {
+  border-color: #6C5CE7;
+  background: #F0EEFF;
+  box-shadow: 0 0 0 2px rgba(108, 92, 231, 0.2);
+}
+
+.client-card strong {
+  font-size: 13px;
+  color: #1A1A2E;
+}
+
+.client-desc {
+  font-size: 11px;
+  color: #6B7280;
+}
+
+.client-files {
+  font-size: 11px;
+  color: #6C5CE7;
+  font-weight: 600;
+}
+
+.client-load-section {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #E2E4EA;
+}
+
+.load-instructions {
+  font-size: 13px;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.file-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.file-chip {
+  padding: 3px 10px;
+  background: #F5F6F8;
+  border: 1px solid #E2E4EA;
+  border-radius: 6px;
+  font-size: 11px;
+  font-family: monospace;
+  color: #374151;
+}
+
+.load-hint {
+  font-size: 11px;
+  color: #9CA3AF;
+  margin-bottom: 10px;
+}
+
+.load-hint code {
+  background: #F5F6F8;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+}
+
+.research-textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #D1D5DB;
+  border-radius: 8px;
+  background: #FAFAFA;
+  color: #1A1A2E;
+  font-size: 13px;
+  font-family: 'Inter', monospace;
+  line-height: 1.5;
+  resize: vertical;
+  margin-bottom: 12px;
+}
+
+.research-textarea:focus {
+  outline: none;
+  border-color: #6C5CE7;
+  box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.1);
+}
+
+.research-textarea.large {
+  min-height: 300px;
+}
+
+.paste-stats {
+  font-size: 11px;
+  color: #9CA3AF;
+  margin-bottom: 8px;
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
